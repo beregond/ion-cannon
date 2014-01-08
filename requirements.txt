@@ -1,0 +1,17 @@
+Jinja2==2.7.1
+MarkupSafe==0.18
+Pygments==1.6
+Sphinx==1.2
+argparse==1.2.1
+docutils==0.11
+execnet==1.1
+invoke==0.6.1
+pep257==0.2.4
+pep8==1.4.6
+py==1.4.19
+pymongo==2.6.3
+pytest==2.5.1
+pytest-cache==1.0
+pytest-pep8==1.0.5
+tornado==3.1.1
+wsgiref==0.1.2
