@@ -38,6 +38,7 @@ def show_help():
             use '--force' option.
         fire - Send all saved previously requests and send them to target
             address with proper arguments, headers and intervals.
+        monitor port - Monitor incoming requests at given port.
         help - Show help.
 
     """)
