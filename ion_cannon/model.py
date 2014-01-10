@@ -58,14 +58,25 @@ class Bullet(object):
         self.id = str(result)
 
     def has_file(self):
+        """Check if model has any file.
+
+        :return: Boolean.
+
+        """
         fs = self._get_filesystem()
         return self.file is not None and fs.exists(ObjectId(self.file))
 
     def get_file(self):
+        """Get file.
+
+        :return: ``GridOut`` which is file-like object.
+
+        """
         fs = self._get_filesystem()
         return fs.get(ObjectId(self.file))
 
     def delete(self):
+        """Delete model."""
         col = self._get_collection()
         fs = self._get_filesystem()
         col.remove({'_id': ObjectId(self.id)})
@@ -74,11 +85,17 @@ class Bullet(object):
 
     @classmethod
     def count(cls):
-        """Count all available objects."""
+        """Count all available objects.
+
+        :return: Amount of objects in database.
+        :rtype: int
+
+        """
         return cls._get_collection().count()
 
     @classmethod
     def all(cls):
+        """Get all models."""
         for item in cls._get_collection().find():
             yield cls(**item)
 
@@ -90,6 +107,14 @@ class Bullet(object):
 
     @classmethod
     def get_by_id(cls, identity):
+        """Find model by its id.
+
+        :param identity: Identity of model.
+        :raises: ``NotFound`` when ``identity`` is not correct.
+        :return: Initialized object.
+        :rtype: ``Bullet``.
+
+        """
         col = cls._get_collection()
 
         try:
@@ -107,6 +132,7 @@ class Bullet(object):
 
     @classmethod
     def get_all_chronologically(cls):
+        """Get all available models ordered ascending by time."""
         for item in cls._get_collection().find().sort(
                 'time', pymongo.ASCENDING):
             yield cls(**item)
@@ -139,15 +165,26 @@ class MainClock(object):
 
     @classmethod
     def initialize(cls, clock):
+        """Initialize clock.
+
+        :param Clock clock: Concrete clock.
+
+        """
         cls._clock = clock
 
     @classmethod
     def check(cls):
+        """Check time.
+
+        :return: Timestamp in miliseconds.
+
+        """
         try:
             return cls._clock.check()
-        except AttributeError as e:
+        except AttributeError:
             raise RuntimeError("Main clock is wrongly or not initialized.")
 
     @classmethod
     def cleanup(cls):
+        """Destroy assigned clock."""
         cls._clock = None

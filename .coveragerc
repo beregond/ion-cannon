@@ -1,0 +1,5 @@
+[run]
+branch = True
+omit =
+    cannon.py
+    tasks.py

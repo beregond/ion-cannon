@@ -79,19 +79,11 @@ def load(opts=None):
     loop.start()
 
 
-def _lookahead(iterable):
-    it = iter(iterable)
-    last = it.next()
-    for val in it:
-        yield last, False
-        last = val
-    yield last, True
-
-
 def fire():
+    """Send recorded requests to target address."""
     loop = tornado.ioloop.IOLoop.instance()
 
-    for item, last in _lookahead(Bullet.get_all_chronologically()):
+    for item in Bullet.get_all_chronologically():
         func = partial(sender, item.id)
         last_time = item.time
         loop.add_timeout(datetime.timedelta(0, 0, 0, item.time), func)
@@ -102,14 +94,19 @@ def fire():
     loop.start()
 
 
+def monitor(argv):
+    """Monitor request on given address."""
+    app = tornado.web.Application([(r'/.*', MonitorHandler)])
+    app.listen(argv[2])
+    loop = tornado.ioloop.IOLoop.instance()
+    loop.start()
+
+
 if switch == 'reload':
     load(options)
 elif switch == 'fire':
     fire()
 elif switch == 'monitor':
-    app = tornado.web.Application([(r'/.*', MonitorHandler)])
-    app.listen(sys.argv[2])
-    loop = tornado.ioloop.IOLoop.instance()
-    loop.start()
+    monitor(sys.argv)
 else:
     show_help()
