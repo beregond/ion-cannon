@@ -1,4 +1,4 @@
-"""Code for recording requests."""
+"""Utilities for recording requests."""
 
 from tornado.web import RequestHandler
 
@@ -48,3 +48,36 @@ class RecordHandler(RequestHandler):
         )
         obj.content = self.request.body if len(self.request.body) else None
         obj.save()
+
+
+class MonitorHandler(RequestHandler):
+
+    """Handler that just receives all incoming requests and do nothing more."""
+
+    def head(self, *args, **kwargs):
+        """Handle head request."""
+        pass
+
+    def get(self, *args, **kwargs):
+        """Handle get request."""
+        pass
+
+    def post(self, *args, **kwargs):
+        """Handle post request."""
+        pass
+
+    def delete(self, *args, **kwargs):
+        """Handle delete request."""
+        pass
+
+    def patch(self, *args, **kwargs):
+        """Handle patch request."""
+        pass
+
+    def put(self, *args, **kwargs):
+        """Handle put request."""
+        pass
+
+    def options(self, *args, **kwargs):
+        """Handle options request."""
+        pass

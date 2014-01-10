@@ -3,10 +3,12 @@
 import time
 import json
 
+import pymongo
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 
 from . import get_storage
+from .error import NotFound
 
 
 class Bullet(object):
@@ -55,6 +57,14 @@ class Bullet(object):
         result = collection.insert(obj)
         self.id = str(result)
 
+    def has_file(self):
+        fs = self._get_filesystem()
+        return self.file is not None and fs.exists(ObjectId(self.file))
+
+    def get_file(self):
+        fs = self._get_filesystem()
+        return fs.get(ObjectId(self.file))
+
     def delete(self):
         col = self._get_collection()
         fs = self._get_filesystem()
@@ -85,10 +95,21 @@ class Bullet(object):
         try:
             identity = ObjectId(identity)
         except InvalidId:
-            return None
+            raise NotFound(
+                'Model with id "{}" was not found.'.format(identity))
 
         result = col.find_one({'_id': identity})
-        return cls(**result) if result else None
+        if result:
+            return cls(**result)
+        else:
+            raise NotFound(
+                'Model with id "{}" was not found.'.format(identity))
+
+    @classmethod
+    def get_all_chronologically(cls):
+        for item in cls._get_collection().find().sort(
+                'time', pymongo.ASCENDING):
+            yield cls(**item)
 
 
 class Clock(object):

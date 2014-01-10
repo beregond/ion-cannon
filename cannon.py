@@ -1,15 +1,19 @@
 """Cannon to record and later send recorded http request to target url."""
 
 import sys
+import datetime
+from functools import partial
 
 import tornado.ioloop
 import tornado.web
-
-from ion_cannon.record import RecordHandler
-from ion_cannon.model import Bullet, MainClock, Clock
+from logging.config import fileConfig
 
 import settings
+from ion_cannon.receive import RecordHandler, MonitorHandler
+from ion_cannon.send import sender
+from ion_cannon.model import Bullet, MainClock, Clock
 
+fileConfig('logging.ini', disable_existing_loggers=False)
 
 try:
     switch = sys.argv[1]
@@ -68,15 +72,44 @@ def load(opts=None):
     # Initialization of main clock.
     MainClock.initialize(Clock())
 
+    print('Started listening at port "{}"'.format(settings.config['port']))
     app = tornado.web.Application([(r'/.*', RecordHandler)])
     app.listen(settings.config['port'])
     loop = tornado.ioloop.IOLoop.instance()
     loop.start()
 
 
+def _lookahead(iterable):
+    it = iter(iterable)
+    last = it.next()
+    for val in it:
+        yield last, False
+        last = val
+    yield last, True
+
+
+def fire():
+    loop = tornado.ioloop.IOLoop.instance()
+
+    for item, last in _lookahead(Bullet.get_all_chronologically()):
+        func = partial(sender, item.id)
+        last_time = item.time
+        loop.add_timeout(datetime.timedelta(0, 0, 0, item.time), func)
+
+    def stop_loop():
+        loop.stop()
+    loop.add_timeout(datetime.timedelta(0, 0, 0, last_time + 100), stop_loop)
+    loop.start()
+
+
 if switch == 'reload':
     load(options)
 elif switch == 'fire':
-    pass
+    fire()
+elif switch == 'monitor':
+    app = tornado.web.Application([(r'/.*', MonitorHandler)])
+    app.listen(sys.argv[2])
+    loop = tornado.ioloop.IOLoop.instance()
+    loop.start()
 else:
     show_help()

@@ -1,4 +1,5 @@
 *.pyc
 *~
 settings.py
+logging.ini
 /.cache
