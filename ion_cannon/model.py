@@ -33,6 +33,8 @@ class Bullet(object):
         self.headers = kwargs.get('headers')
         if self.headers and not isinstance(self.headers, dict):
             self.headers = json.loads(self.headers)
+            if not isinstance(self.headers, dict):
+                self.headers = {}
         self.uri = kwargs.get('uri')
         self.method = kwargs.get('method')
         self.content = kwargs.get('content')
