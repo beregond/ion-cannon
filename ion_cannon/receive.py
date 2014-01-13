@@ -44,7 +44,6 @@ class RecordHandler(RequestHandler):
             time=MainClock.check(),
             headers=self.request.headers,
             method=self.request.method,
-            version=self.request.version
         )
         obj.content = self.request.body if len(self.request.body) else None
         obj.save()

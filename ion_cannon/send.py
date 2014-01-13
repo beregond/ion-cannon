@@ -14,7 +14,7 @@ from .error import NotFound
 LOGGER = logging.getLogger('root')
 
 
-def resp_handler(resp, oid, method, logger=LOGGER):
+def response_handler(resp, oid, method, logger=LOGGER):
     """Handle response and log info about it.
 
     :param resp: HTTP response object.
@@ -22,22 +22,24 @@ def resp_handler(resp, oid, method, logger=LOGGER):
     :param str method: Used method.
 
     """
-    logger = logging.getLogger('root')
     log = logger.error if resp.error else logger.info
     log('{} {} {} {} {}'.format(
         resp.code, resp.reason, oid, method, resp.effective_url))
 
 
-def sender(
+def send(
         oid,
         httpclient=AsyncHTTPClient,
         target=settings.config['target'],
+        handler=response_handler,
         logger=LOGGER):
     """Send http object with given id with use of given http client.
 
     :param str oid: Object id.
     :param httpclient: HTTP client to use.
     :param str target: Where to send request.
+    :param function resp_handler: Response handler.
+    :param object logger: Logger to use in case of error.
 
     """
     try:
@@ -46,18 +48,18 @@ def sender(
         logger.error('Object with id "{}" was not found!'.format(oid))
         return
 
-    target = settings.config['target']
-    if target.endswith('/'):
-        target = target[:-1]
-    if not target.startswith('http://'):
-        target = 'http://' + target
-    target += item.uri
+    url = target
+    if url.endswith('/'):
+        url = url[:-1]
+    if not url.startswith('http://'):
+        url = 'http://' + url
+    url += item.uri
 
     client = httpclient()
     method = item.method.upper()
     body = item.get_file().read() if item.has_file() else None
 
-    handler = partial(resp_handler, oid=oid, method=method)
+    resp_handler = partial(handler, oid=oid, method=method)
 
     client.fetch(
-        target, handler, method=method, body=body, headers=item.headers)
+        url, resp_handler, method=method, body=body, headers=item.headers)

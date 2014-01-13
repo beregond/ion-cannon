@@ -6,9 +6,10 @@ import json
 import pymongo
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from gridfs.errors import NoFile as GridNoFile
 
 from . import get_storage
-from .error import NotFound
+from .error import NotFound, NoFile
 
 
 class Bullet(object):
@@ -40,7 +41,6 @@ class Bullet(object):
         self.content = kwargs.get('content')
         self.time = kwargs.get('time')
         self.file = kwargs.get('file')
-        self.version = kwargs.get('version')
 
     def save(self):
         """Save model to database."""
@@ -51,7 +51,6 @@ class Bullet(object):
             'uri': self.uri,
             'method': self.method,
             'time': self.time,
-            'version': self.version,
         }
         if self.content:
             file_obj = fs.put(self.content)
@@ -75,7 +74,10 @@ class Bullet(object):
 
         """
         fs = self._get_filesystem()
-        return fs.get(ObjectId(self.file))
+        try:
+            return fs.get(ObjectId(self.file))
+        except GridNoFile:
+            raise NoFile('Object with id "{}" has no file.'.format(self.id))
 
     def delete(self):
         """Delete model."""

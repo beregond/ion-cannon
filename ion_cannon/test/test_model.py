@@ -3,7 +3,7 @@
 import pytest
 
 from ..model import Bullet, Clock, MainClock
-from ..error import NotFound
+from ..error import NotFound, NoFile
 
 
 def _prepare():
@@ -20,7 +20,6 @@ def test_save_and_get_by_id():
     x.method = 'get'
     x.content = 'some content'
     x.time = 10
-    x.version = '1'
     assert x.id is None
     x.save()
     assert x.id is not None
@@ -36,7 +35,6 @@ def test_save_and_get_by_id():
     assert y.method is not None
     assert y.file is not None
     assert y.time is not None
-    assert y.version is not None
 
     non_existing = identity[::2] + identity[1::2]
     assert non_existing != identity
@@ -60,7 +58,6 @@ def test_count_bullets():
     x.method = 'get'
     x.content = 'some content'
     x.time = 10
-    x.version = '1'
     x.save()
 
     assert Bullet.count() == 1
@@ -71,7 +68,6 @@ def test_count_bullets():
     x.method = 'post'
     x.content = 'other content'
     x.time = 100
-    x.version = '2'
     x.save()
 
     assert Bullet.count() == 2
@@ -108,31 +104,32 @@ def test_main_clock():
 def test_get_all_chronologically():
     _prepare()
 
+    cursor = Bullet.get_all_chronologically()
+    result = [x for x in cursor]
+    assert len(result) == 0
+
     x = Bullet()
-    x.headers = 'test'
+    x.headers = {"some_header": "some_value"}
     x.uri = '/test'
     x.method = 'get'
     x.content = 'some content'
     x.time = 1000
-    x.version = '1'
     x.save()
 
     x = Bullet()
-    x.headers = 'headers'
+    x.headers = {"some_header": "some_value"}
     x.uri = '/other'
     x.method = 'post'
     x.content = 'other content'
     x.time = 10
-    x.version = '2'
     x.save()
 
     x = Bullet()
-    x.headers = 'headers2'
+    x.headers = {"some_header": "some_value2"}
     x.uri = '/other2'
     x.method = 'post'
     x.content = 'other content'
     x.time = 100
-    x.version = '3'
     x.save()
 
     assert Bullet.count() == 3
@@ -141,12 +138,57 @@ def test_get_all_chronologically():
 
     y = next(cursor)
     assert y.time == 10
-    assert y.headers == 'headers'
+    assert y.headers == {"some_header": "some_value"}
 
     y = next(cursor)
     assert y.time == 100
-    assert y.headers == 'headers2'
+    assert y.headers == {"some_header": "some_value2"}
 
     y = next(cursor)
     assert y.time == 1000
-    assert y.headers == 'test'
+    assert y.headers == {"some_header": "some_value"}
+
+
+def test_without_file():
+    _prepare()
+
+    x = Bullet()
+    x.uri = '/test'
+    x.method = 'get'
+    x.time = 1000
+
+    with pytest.raises(NoFile):
+        x.get_file()
+
+    x.save()
+
+    y = Bullet.get_by_id(x.id)
+    assert y.uri == x.uri
+    assert y.file is None
+    assert y.has_file() is False
+    with pytest.raises(NoFile):
+        y.get_file()
+
+
+def test_remove_all():
+    _prepare()
+
+    x = Bullet()
+    x.headers = {'key': 'value'}
+    x.uri = '/test'
+    x.method = 'get'
+    x.content = 'some content'
+    x.time = 10
+    x.save()
+
+    x = Bullet()
+    x.headers = {'key': 'value'}
+    x.uri = '/test'
+    x.method = 'get'
+    x.content = 'some content'
+    x.time = 100
+    x.save()
+
+    assert Bullet.count() == 2
+    Bullet.remove_all()
+    assert Bullet.count() == 0

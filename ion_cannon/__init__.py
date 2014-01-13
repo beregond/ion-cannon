@@ -17,7 +17,9 @@ def _get_storage(cache):
     purposes.
 
     """
-    if cache.get('storage') is None:
+    cache_key = 'storage_test' if settings.TEST else 'storage'
+
+    if cache.get(cache_key) is None:
         if settings.TEST:
             config = settings.config['test_mongo']
         else:

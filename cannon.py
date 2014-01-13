@@ -10,7 +10,7 @@ from logging.config import fileConfig
 
 import settings
 from ion_cannon.receive import RecordHandler, MonitorHandler
-from ion_cannon.send import sender
+from ion_cannon.send import send
 from ion_cannon.model import Bullet, MainClock, Clock
 
 fileConfig('logging.ini', disable_existing_loggers=False)
@@ -85,7 +85,7 @@ def fire():
     loop = tornado.ioloop.IOLoop.instance()
 
     for item in Bullet.get_all_chronologically():
-        func = partial(sender, item.id)
+        func = partial(send, item.id)
         last_time = item.time
         loop.add_timeout(datetime.timedelta(0, 0, 0, item.time), func)
 
