@@ -2,11 +2,13 @@
 
 import pytest
 
+from . import switch_to_test_db
 from ..model import Bullet, MilisecondsClock, Clock
 from ..error import NotFound, NoFile
 
 
 def _prepare():
+    switch_to_test_db()
     Bullet.remove_all()
     assert Bullet.count() == 0
 

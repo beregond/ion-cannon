@@ -3,6 +3,7 @@
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
+from . import switch_to_test_db
 from ..model import Bullet
 from ..receive import MonitorHandler, RecordHandler
 
@@ -22,6 +23,7 @@ class TestMonitorHandler(AsyncHTTPTestCase):
         return Application([(r'/.*', MonitorHandler)])
 
     def test_http_fetch(self):
+        switch_to_test_db()
         Bullet.remove_all()
         for method, body in _iterate_methods():
             response = self.fetch('/', method=method.upper(), body=body)
@@ -35,6 +37,7 @@ class TestRecordHandler(AsyncHTTPTestCase):
         return Application([(r'/.*', RecordHandler)])
 
     def test_http_fetch(self):
+        switch_to_test_db()
         for method, body in _iterate_methods():
             Bullet.remove_all()
             assert Bullet.count() == 0

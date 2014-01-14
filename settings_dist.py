@@ -1,7 +1,5 @@
 """Config file."""
 
-TEST = False
-
 config = {
     # Port to listen, while recording requests.
     'port': '80',

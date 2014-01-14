@@ -1,5 +1,6 @@
 """Test send functions."""
 
+from . import switch_to_test_db
 from ..send import send, response_handler
 from ..model import Bullet
 
@@ -69,6 +70,7 @@ def test_response_handler_with_error():
 
 
 def test_send_with_not_existent_object():
+    switch_to_test_db()
     Bullet.remove_all()
     assert Bullet.count() == 0
 
@@ -84,6 +86,7 @@ def test_send_with_not_existent_object():
 
 
 def test_send():
+    switch_to_test_db()
     Bullet.remove_all()
     assert Bullet.count() == 0
 
