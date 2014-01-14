@@ -141,17 +141,31 @@ class Bullet(object):
                 'time', pymongo.ASCENDING):
             yield cls(**item)
 
+    @classmethod
+    def get_latest(cls):
+        """Get latest model from database, raise exception otherwise.
 
-class Clock(object):
+        :raises: ``NotFound`` if there are no objects in database.
+        :return: Initialized object.
+        :rtype: ``Bullet``.
 
-    """Clock for fetch relative timestamps from given point."""
+        """
+        for item in cls._get_collection().find().limit(1).sort(
+                'time', pymongo.DESCENDING):
+            return cls(**item)
+        raise NotFound('No models in database.')
+
+
+class MilisecondsClock(object):
+
+    """Clock for fetch relative timestamps in miliseconds."""
 
     @staticmethod
     def _get_timestamp():
         return int(round(time.time() * 1000))
 
-    def __init__(self):
-        self._zero = self._get_timestamp()
+    def __init__(self, offset=0):
+        self._zero = self._get_timestamp() - offset
 
     def check(self):
         """Check time (in miliseconds).
@@ -163,7 +177,7 @@ class Clock(object):
         return self._get_timestamp() - self._zero
 
 
-class MainClock(object):
+class Clock(object):
 
     """Singleton to keep reference to actually used Clock."""
 
@@ -183,10 +197,9 @@ class MainClock(object):
         :return: Timestamp in miliseconds.
 
         """
-        try:
-            return cls._clock.check()
-        except AttributeError:
-            raise RuntimeError("Main clock is wrongly or not initialized.")
+        if not hasattr(cls, '_clock') or cls._clock is None:
+            cls.initialize(MilisecondsClock())
+        return cls._clock.check()
 
     @classmethod
     def cleanup(cls):

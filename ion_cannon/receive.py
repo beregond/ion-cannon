@@ -2,7 +2,7 @@
 
 from tornado.web import RequestHandler
 
-from .model import Bullet, MainClock
+from .model import Bullet, Clock
 
 
 class RecordHandler(RequestHandler):
@@ -41,7 +41,7 @@ class RecordHandler(RequestHandler):
         """Record incoming http request."""
         obj = Bullet(
             uri=self.request.uri,
-            time=MainClock.check(),
+            time=Clock.check(),
             headers=self.request.headers,
             method=self.request.method,
         )

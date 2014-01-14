@@ -3,7 +3,7 @@
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from ..model import Bullet, MainClock, Clock
+from ..model import Bullet
 from ..receive import MonitorHandler, RecordHandler
 
 METHODS = ['get', 'post', 'head', 'options', 'delete', 'patch', 'put']
@@ -35,7 +35,6 @@ class TestRecordHandler(AsyncHTTPTestCase):
         return Application([(r'/.*', RecordHandler)])
 
     def test_http_fetch(self):
-        MainClock.initialize(Clock())
         for method, body in _iterate_methods():
             Bullet.remove_all()
             assert Bullet.count() == 0

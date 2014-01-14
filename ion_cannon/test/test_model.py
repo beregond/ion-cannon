@@ -2,7 +2,7 @@
 
 import pytest
 
-from ..model import Bullet, Clock, MainClock
+from ..model import Bullet, MilisecondsClock, Clock
 from ..error import NotFound, NoFile
 
 
@@ -73,8 +73,8 @@ def test_count_bullets():
     assert Bullet.count() == 2
 
 
-def test_clock():
-    x = Clock()
+def test_miliseconds_clock():
+    x = MilisecondsClock()
     t1 = x.check()
     t2 = x.check()
     t3 = x.check()
@@ -83,26 +83,34 @@ def test_clock():
     assert t2 <= t3
 
 
-def test_main_clock():
-    MainClock.cleanup()
-    with pytest.raises(RuntimeError):
-        MainClock.check()
+def test_miliseconds_clock_offset():
+    x = MilisecondsClock(offset=10000)
+    t1 = x.check()
+    assert t1 >= 10000
 
-    MainClock.initialize(Clock())
-    x = MainClock.check()
+
+def test_clock():
+    x = Clock.check()
     assert x is not None
 
-    MainClock.initialize(Clock())
-    x = MainClock.check()
+    Clock.initialize(MilisecondsClock())
+    x = Clock.check()
     assert x is not None
 
-    MainClock.cleanup()
-    with pytest.raises(RuntimeError):
-        MainClock.check()
+    Clock.initialize(MilisecondsClock())
+    x = Clock.check()
+    assert x is not None
+
+    Clock.cleanup()
+    Clock.check()
+    Clock.cleanup()
 
 
-def test_get_all_chronologically():
+def test_get_all_chronologically_and_get_latest():
     _prepare()
+
+    with pytest.raises(NotFound):
+        z = Bullet.get_latest()
 
     cursor = Bullet.get_all_chronologically()
     result = [x for x in cursor]
@@ -133,6 +141,10 @@ def test_get_all_chronologically():
     x.save()
 
     assert Bullet.count() == 3
+
+    z = Bullet.get_latest()
+    assert z.time == 1000
+    assert z.uri == '/test'
 
     cursor = Bullet.get_all_chronologically()
 

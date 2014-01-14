@@ -11,7 +11,8 @@ from logging.config import fileConfig
 import settings
 from ion_cannon.receive import RecordHandler, MonitorHandler
 from ion_cannon.send import send
-from ion_cannon.model import Bullet, MainClock, Clock
+from ion_cannon.model import Bullet, Clock, MilisecondsClock
+from ion_cannon.error import NotFound
 
 fileConfig('logging.ini', disable_existing_loggers=False)
 
@@ -64,14 +65,23 @@ def load(opts=None):
     if Bullet.count():
         if has_option('force'):
             Bullet.remove_all()
+        elif has_option('continue'):
+            # Proper initialization of main clock.
+            try:
+                latest = Bullet.get_latest()
+                offset = latest.time + 100
+            except NotFound:
+                offset = 0
+
+            clock = MilisecondsClock(offset=offset)
+            Clock.initialize(clock)
         else:
             print(
                 "There are already records in database, use '--force' (Luke) "
-                "to erase them, and start new recording.")
+                "to erase them, and start new recording, or '--continue' "
+                "to continue from 100 miliseconds after last recorded "
+                "request.")
             exit(0)
-
-    # Initialization of main clock.
-    MainClock.initialize(Clock())
 
     print('Started listening at port "{}"'.format(settings.config['port']))
     app = tornado.web.Application([(r'/.*', RecordHandler)])
