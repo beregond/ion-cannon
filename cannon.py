@@ -1,6 +1,6 @@
 """Cannon to record and later send recorded http request to target url."""
 
-import sys
+import argparse
 import datetime
 from functools import partial
 
@@ -16,56 +16,27 @@ from ion_cannon.error import NotFound
 
 fileConfig('logging.ini', disable_existing_loggers=False)
 
-try:
-    switch = sys.argv[1]
-except IndexError:
-    switch = 'help'
+HELP = """
+    [reload|fire|monitor]
 
-options = []
-for arg in sys.argv:
-    if arg.startswith('--'):
-        options.append(arg[2:])
+    reload - Start listening on given port and save all coming requests
+    to database. If there are already some requests recorded, you must
+    use '--force' option.
 
+    fire - Send all saved previously requests and send them to target
+    address with proper arguments, headers and intervals.
 
-def show_help():
-    """Show help for CLI."""
-
-    print("""Usage: python cannon.py command [options]
-
-        Available commands:
-
-        reload - Start listening on given port and save all coming requests
-            to database. If there are already some requests recorded, you must
-            use '--force' option.
-        fire - Send all saved previously requests and send them to target
-            address with proper arguments, headers and intervals.
-        monitor port - Monitor incoming requests at given port.
-        help - Show help.
-
-    """)
+    monitor - Monitor incoming requests at given port.
+"""
 
 
-def _checker(data):
-    if data is None:
-        return lambda i: False
-
-    def inner(i):
-        try:
-            data.index(i)
-            return True
-        except ValueError:
-            return False
-    return inner
-
-
-def load(opts=None):
+def load(args):
     """Start recording http requests."""
-    has_option = _checker(opts)
 
     if Bullet.count():
-        if has_option('force'):
+        if args.force:
             Bullet.remove_all()
-        elif has_option('continue'):
+        elif args.append:
             # Proper initialization of main clock.
             try:
                 latest = Bullet.get_latest()
@@ -78,7 +49,7 @@ def load(opts=None):
         else:
             print(
                 "There are already records in database, use '--force' (Luke) "
-                "to erase them, and start new recording, or '--continue' "
+                "to erase them, and start new recording, or '--append' "
                 "to continue from 100 miliseconds after last recorded "
                 "request.")
             exit(0)
@@ -90,7 +61,7 @@ def load(opts=None):
     loop.start()
 
 
-def fire():
+def fire(args):
     """Send recorded requests to target address."""
     loop = tornado.ioloop.IOLoop.instance()
 
@@ -105,19 +76,42 @@ def fire():
     loop.start()
 
 
-def monitor(argv):
+def monitor(args):
     """Monitor request on given address."""
     app = tornado.web.Application([(r'/.*', MonitorHandler)])
-    app.listen(argv[2])
+    app.listen(args.port)
     loop = tornado.ioloop.IOLoop.instance()
     loop.start()
 
 
-if switch == 'reload':
-    load(options)
-elif switch == 'fire':
-    fire()
-elif switch == 'monitor':
-    monitor(sys.argv)
-else:
-    show_help()
+parser = argparse.ArgumentParser()
+
+parser.add_argument('action', help=HELP)
+parser.add_argument('port', nargs='?', default=False)
+parser.add_argument(
+    '--force',
+    action='store_const',
+    const=True,
+    default=False,
+    help="for reload action, it erases previous records and starts again"
+)
+parser.add_argument(
+    '--append',
+    action='store_const',
+    const=True,
+    default=False,
+    help="for reload action, it append new records after existing ones"
+)
+
+if __name__ == '__main__':
+    arg = parser.parse_args()
+
+    action = arg.action
+    if action == 'reload':
+        load(arg)
+    elif action == 'fire':
+        fire(arg)
+    elif action == 'monitor':
+        monitor(arg)
+    else:
+        print('Wrong action!')
