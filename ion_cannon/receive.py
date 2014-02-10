@@ -25,9 +25,10 @@ class RecordHandler(RequestHandler):
     put = handle
     patch = handle
 
-    def initialize(self, tunnel=False):
+    def initialize(self, tunnel=False, send_func=send):
         """Initialize handler."""
         self.tunnel = tunnel
+        self.send_func = send_func
 
     def _handler(self, request, *args, **kwargs):
         for header, value in request.headers.items():
@@ -46,7 +47,7 @@ class RecordHandler(RequestHandler):
         obj.save()
 
         if self.tunnel:
-            yield send(obj.id, handler=self._handler)
+            yield self.send_func(obj.id, handler=self._handler)
         self.finish()
 
 

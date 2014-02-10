@@ -1,8 +1,20 @@
 """Test send functions."""
 
+from tornado.web import Future
+
 from . import switch_to_test_db
 from ..send import send, response_handler
 from ..model import Bullet
+
+
+class DummyResponse(object):
+
+    """Dummy response."""
+
+    def __init__(self, body):
+        self.error = False
+        self.body = body
+        self.headers = {'version': '1.0'}
 
 
 class DummyLogger(object):
@@ -35,6 +47,13 @@ class DummyHTTPClient(object):
         cls.url = url
         cls.handler = handler
         cls.kwargs = kwargs
+        fut = Future()
+        fut.set_result('some result')
+
+        resp = DummyResponse('some body')
+        handler(resp)
+
+        return fut
 
 
 def test_response_handler():
@@ -75,7 +94,7 @@ def test_send_with_not_existent_object():
     assert Bullet.count() == 0
 
     logger = DummyLogger()
-    handler = lambda: None
+    handler = lambda *args, **kwargs: None
     handler()
 
     send(
@@ -99,7 +118,7 @@ def test_send():
     x.save()
 
     logger = DummyLogger()
-    handler = lambda: None
+    handler = lambda *args, **kwargs: None
     handler()
 
     client = DummyHTTPClient
