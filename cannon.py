@@ -17,7 +17,7 @@ from ion_cannon.error import NotFound
 fileConfig('logging.ini', disable_existing_loggers=False)
 
 HELP = """
-    [reload|fire|monitor]
+    [reload|fire|tunnel|monitor]
 
     reload - Start listening on given port and save all coming requests
     to database. If there are already some requests recorded, you must
@@ -26,11 +26,14 @@ HELP = """
     fire - Send all saved previously requests and send them to target
     address with proper arguments, headers and intervals.
 
+    tunnel - simultaneusly load and fire request. In this mode application
+    works like http proxy with recorder on one side.
+
     monitor - Monitor incoming requests at given port.
 """
 
 
-def load(args):
+def load(args, tunnel_=False):
     """Start recording http requests."""
 
     if Bullet.count():
@@ -55,7 +58,9 @@ def load(args):
             exit(0)
 
     print('Started listening at port "{}"'.format(settings.config['port']))
-    app = tornado.web.Application([(r'/.*', RecordHandler)])
+
+    app = tornado.web.Application(
+        [(r'/.*', RecordHandler, {'tunnel': tunnel_})])
     app.listen(settings.config['port'])
     loop = tornado.ioloop.IOLoop.instance()
     loop.start()
@@ -82,6 +87,11 @@ def monitor(args):
     app.listen(args.port)
     loop = tornado.ioloop.IOLoop.instance()
     loop.start()
+
+
+def tunnel(args):
+    """Tunnel requests and record them."""
+    load(args, True)
 
 
 parser = argparse.ArgumentParser()
@@ -113,5 +123,7 @@ if __name__ == '__main__':
         fire(arg)
     elif action == 'monitor':
         monitor(arg)
+    elif action == 'tunnel':
+        tunnel(arg)
     else:
         print('Wrong action!')
