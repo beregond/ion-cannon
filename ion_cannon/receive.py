@@ -1,44 +1,42 @@
 """Utilities for recording requests."""
 
+from tornado.gen import coroutine
 from tornado.web import RequestHandler
 
 from .model import Bullet, Clock
+from .send import send
+
+
+@coroutine
+def handle(self):
+    """Record incoming http request."""
+    yield next(self.record())
 
 
 class RecordHandler(RequestHandler):
 
     """Handler that records all incoming http request."""
 
-    def head(self, *args, **kwargs):
-        """Handle head request."""
-        self.record(*args, **kwargs)
+    get = handle
+    post = handle
+    head = handle
+    options = handle
+    delete = handle
+    put = handle
+    patch = handle
 
-    def get(self, *args, **kwargs):
-        """Handle get request."""
-        self.record(*args, **kwargs)
+    def initialize(self, tunnel=False, send_func=send):
+        """Initialize handler."""
+        self.tunnel = tunnel
+        self.send_func = send_func
 
-    def post(self, *args, **kwargs):
-        """Handle post request."""
-        self.record(*args, **kwargs)
+    def _handler(self, request, *args, **kwargs):
+        for header, value in request.headers.items():
+            self.set_header(header, value)
+        self.write(request.body)
 
-    def delete(self, *args, **kwargs):
-        """Handle delete request."""
-        self.record(*args, **kwargs)
-
-    def patch(self, *args, **kwargs):
-        """Handle patch request."""
-        self.record(*args, **kwargs)
-
-    def put(self, *args, **kwargs):
-        """Handle put request."""
-        self.record(*args, **kwargs)
-
-    def options(self, *args, **kwargs):
-        """Handle options request."""
-        self.record(*args, **kwargs)
-
-    def record(self, *args, **kwargs):
-        """Record incoming http request."""
+    def record(self):
+        """Record request."""
         obj = Bullet(
             uri=self.request.uri,
             time=Clock.check(),
@@ -48,35 +46,24 @@ class RecordHandler(RequestHandler):
         obj.content = self.request.body if len(self.request.body) else None
         obj.save()
 
+        if self.tunnel:
+            yield self.send_func(obj.id, handler=self._handler)
+        self.finish()
+
+
+def empty_func(self):
+    """Handle request."""
+    pass
+
 
 class MonitorHandler(RequestHandler):
 
     """Handler that just receives all incoming requests and do nothing more."""
 
-    def head(self, *args, **kwargs):
-        """Handle head request."""
-        pass
-
-    def get(self, *args, **kwargs):
-        """Handle get request."""
-        pass
-
-    def post(self, *args, **kwargs):
-        """Handle post request."""
-        pass
-
-    def delete(self, *args, **kwargs):
-        """Handle delete request."""
-        pass
-
-    def patch(self, *args, **kwargs):
-        """Handle patch request."""
-        pass
-
-    def put(self, *args, **kwargs):
-        """Handle put request."""
-        pass
-
-    def options(self, *args, **kwargs):
-        """Handle options request."""
-        pass
+    head = empty_func
+    get = empty_func
+    post = empty_func
+    delete = empty_func
+    patch = empty_func
+    put = empty_func
+    options = empty_func

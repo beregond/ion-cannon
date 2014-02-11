@@ -40,6 +40,7 @@ def send(
     :param str target: Where to send request.
     :param function resp_handler: Response handler.
     :param object logger: Logger to use in case of error.
+    :return: Future.
 
     """
     try:
@@ -61,5 +62,5 @@ def send(
 
     resp_handler = partial(handler, oid=oid, method=method)
 
-    client.fetch(
+    return client.fetch(
         url, resp_handler, method=method, body=body, headers=item.headers)
