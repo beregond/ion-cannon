@@ -66,7 +66,7 @@ def load(args, tunnel_=False):
     loop.start()
 
 
-def fire(args):
+def fire():
     """Send recorded requests to target address."""
     loop = tornado.ioloop.IOLoop.instance()
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     if action == 'reload':
         load(arg)
     elif action == 'fire':
-        fire(arg)
+        fire()
     elif action == 'monitor':
         monitor(arg)
     elif action == 'tunnel':
