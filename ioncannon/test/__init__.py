@@ -1,6 +1,6 @@
 """Tests."""
 
-from ion_cannon import set_storage
+from ioncannon import set_storage
 
 
 def switch_to_test_db():

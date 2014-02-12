@@ -9,10 +9,10 @@ import tornado.web
 from logging.config import fileConfig
 
 import settings
-from ion_cannon.receive import RecordHandler, MonitorHandler
-from ion_cannon.send import send
-from ion_cannon.model import Bullet, Clock, MilisecondsClock
-from ion_cannon.error import NotFound
+from ioncannon.receive import RecordHandler, MonitorHandler
+from ioncannon.send import send
+from ioncannon.model import Bullet, Clock, MilisecondsClock
+from ioncannon.error import NotFound
 
 fileConfig('logging.ini', disable_existing_loggers=False)
 
