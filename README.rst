@@ -32,13 +32,23 @@ To record incomming requests:
     python cannon.py reload
 
 Optionally you can add ``--force`` if there are existing existing records, or
-``--continue`` to continue previous recording.
+``--append`` to continue previous recording.
 
 To send your requests to target (that is set in settings) just type:
 
 .. code-block:: bash
 
     python cannon.py fire
+
+To start Ion Cannon as proxy:
+
+.. code-block:: bash
+
+    python cannon.py tunnel
+
+Just remember to set ``target`` in ``settings.py`` to forward requests.
+
+You can use ``--force`` or ``--append`` options like described above.
 
 Debug
 -----
